@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+{% load static %}
+{% include 'navbar.html' %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            background-color: #1a237e; /* Dark Blue */
+            color: #ffc107; /* Yellow */
+        }
+
+        h2 {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        form {
+            max-width: 300px;
+            margin: 20px auto;
+            background-color: #0d47a1; /* Darker Blue */
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ffc107; /* Yellow */
+            border-radius: 5px;
+            box-sizing: border-box;
+            background-color: #1a237e; /* Dark Blue */
+            color: #ffc107; /* Yellow */
+        }
+
+        input[type="submit"] {
+            background-color: #ffc107; /* Yellow */
+            color: #1a237e; /* Dark Blue */
+            cursor: pointer;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #ffd54f; /* Lighter Yellow */
+        }
+
+        p {
+            text-align: center;
+            margin-top: 15px;
+            color: #fff;
+        }
+
+        a {
+            color: #ffd54f; /* Lighter Yellow */
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h2>Login</h2>
+    <form method="post" action="{% url 'login_view' %}">
+        {% csrf_token %}
+        <input type="text" name="username" placeholder="Username" required>
+        <input type="password" name="password" placeholder="Password" required>
+        <input type="submit" value="Login">
+    </form>
+    <p>Don't have an account? <a href="{% url 'signup' %}">Sign Up</a></p>
+</body>
+</html>

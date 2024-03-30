@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+{% load static %}
+{% include 'navbar.html' %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Route Detail</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            background-color: #1a237e; /* Dark Blue */
+            color: #ffc107; /* Yellow */
+        }
+
+        h2 {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        form {
+            max-width: 300px;
+            margin: 20px auto;
+            background-color: #0d47a1; /* Darker Blue */
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+        input[type="time"]::-webkit-calendar-picker-indicator{
+            filter: invert(48%) sepia(13%) saturate(3207%) hue-rotate(130deg) brightness(100%) contrast(80%);
+            }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ffc107; /* Yellow */
+            border-radius: 5px;
+            box-sizing: border-box;
+            background-color: #1a237e; /* Dark Blue */
+            color: #ffc107; /* Yellow */
+        }
+
+        input[type="submit"] {
+            background-color: #ffc107; /* Yellow */
+            color: #1a237e; /* Dark Blue */
+            cursor: pointer;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #ffd54f; /* Lighter Yellow */
+        }
+
+        p {
+            text-align: center;
+            margin-top: 15px;
+            color: #fff;
+        }
+
+        a {
+            color: #ffd54f; /* Lighter Yellow */
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>Route Detail</h1>
+
+    <form method="post" action="{% url 'route' %}">
+        {% csrf_token %}
+
+        <label for="source">Source:</label>
+        <select name="source" id="source">
+            {% for city in cities %}
+                <option value="{{ city.city }}" {% if city == route.source %}selected{% endif %}>{{ city.city }}</option>
+            {% endfor %}
+        </select>
+        <br>
+        <label for="destination">Destination:</label>
+        <select name="destination" id="destination">
+            {% for city in cities %}
+                <option value="{{ city.city }}" {% if city == route.destination %}selected{% endif %}>{{ city.city }}</option>
+            {% endfor %}
+        </select>
+        <br>
+        <br>
+        {% for city in cities %}
+            <label for="order_{{ city.city }}">Order for {{ city.city }}:</label>
+            <input type="text" name="orders_{{ city.city }}" id="order_{{ city.city }}" placeholder="Enter order"><br>
+
+            <label for="time_{{ city.city }}">Time for {{ city.city }}:</label>
+            <input type="time" name="times_{{ city.city }}" id="time_{{ city.city }}" placeholder="Select time"><br><br>
+        {% endfor %}
+
+        <button type="submit">Submit</button>
+    </form>
+
+</body>
+</html>

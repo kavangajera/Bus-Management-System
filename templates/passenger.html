@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+{% load static %}
+{% include 'navbar.html' %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Passenger</title>
+</head>
+<body>
+    {% if user.is_authenticated %}
+        {% if request.session.user_username %}
+        <p>Logged in as: {{ request.session.user_username }}</p>
+
+        <a href="{% url 'select_route' %}">Select Route</a>
+        {% else %}
+        <p>Not logged in</p>
+        {% endif %}
+    {% endif %}
+
+</body>
+</html>

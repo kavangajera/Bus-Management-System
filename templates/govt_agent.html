@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+{% load static %}
+{% include 'navbar.html' %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Government Agent</title>
+</head>
+<body>
+    {% if user.is_authenticated %}
+        {% if request.session.user_username %}
+        <p>Logged in as: {{ request.session.user_username }}</p>
+        
+        {% else %}
+        <p>Not logged in</p>
+        {% endif %}
+        <a href="{% url 'city' %}">Manage City</a><br>
+        <a href="{% url 'route' %}">Manage Route</a><br>
+        <a href="{% url 'build_bus' %}">Build Bus</a><br>
+
+    {% endif %}
+
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+{% load static %}
+{% include 'navbar.html' %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Build Bus</title>
+</head>
+<body>
+    <form action="{% url 'build_bus' %}" method="post">
+        {%csrf_token%}
+        <label for="route">Route:</label>
+        <select name="route">
+            {% for route in routes %}
+                <option value="{{ route }}">{{ route }}</option>
+            {% endfor %}
+        </select><br>
+        <label for="route">Bus Type:</label>
+        <select name="bus_type">
+            {% for b_type in bus_types %}
+                <option value="{{ b_type }}">{{ b_type }}</option>
+            {% endfor %}
+        </select><br>
+        <input type="number" name="seats" placeholder="seats">
+        <br>
+        <button type="submit">Build</button>
+    </form>
+</body>
+</html>

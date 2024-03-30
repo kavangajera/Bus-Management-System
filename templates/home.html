@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to BMS</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        header {
+            background-color: #1a237e; /* Dark Blue */
+            color: #ffc107; /* Yellow */
+            padding: 10px;
+            text-align: center;
+        }
+
+        nav {
+            display: flex;
+            justify-content: center;
+            background-color: #0d47a1; /* Darker Blue */
+            padding: 10px;
+        }
+
+        nav a {
+            color: #ffc107; /* Yellow */
+            text-decoration: none;
+            padding: 10px 20px;
+            margin: 0 10px;
+            border-radius: 5px;
+        }
+
+        nav a:hover {
+            background-color: #1565c0; /* Darker Hover Blue */
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Welcome To Bus Management System</h1>
+    </header>
+
+    <nav>
+        <a href="#">Home</a>
+        <a href="signup">Sign-Up</a>
+        <a href="login_view">Login</a>
+        <!-- Add more navigation links as needed -->
+    </nav>
+
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <h3>Signup if new</h3>
+    <a href="signup"><button>Sign-Up</button></a>
+    <h5>Or login</h5>
+    <a href="login_view"><button>Login</button></a>
+</body>
+</html>

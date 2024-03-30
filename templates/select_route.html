@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+{% load static %}
+{% include 'navbar.html' %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Route</title>
+    <link rel="stylesheet" href="{% static 'css/booking.css' %}">
+</head>
+<body>
+     <form action="{% url 'select_route' %}"  method="post">
+        {%csrf_token%}
+        <label for="source">Source:</label>
+        <select name="source" id="source">
+            {% for city in cities %}
+                <option value="{{ city.city }}">{{ city.city }}</option>
+            {% endfor %}
+        </select>
+        <br>
+        <label for="destination">Destination:</label>
+        <select name="destination" id="destination">
+            {% for city in cities %}
+                <option value="{{ city.city }}">{{ city.city }}</option>
+            {% endfor %}
+        </select>
+        <br>
+        <button type="submit">Search</button>
+     </form>
+     <script src="{% static 'js/script.js' %}"></script>
+</body>
+</html>
