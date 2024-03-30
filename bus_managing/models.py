@@ -63,11 +63,11 @@ class Bus_Type(models.Model):
         return self.bus_type
     
 class Bus_Detail(models.Model):
-    bus_name = models.CharField(max_length=122, primary_key=True)
+    bus_id = models.AutoField(primary_key=True)
+    bus_name = models.CharField(max_length=122)
     route = models.ForeignKey(Route_Detail,blank=True, null=True,on_delete=models.CASCADE)
     bus_type = models.ForeignKey(Bus_Type,max_length=122, blank=True, null=True,on_delete=models.CASCADE)
     seats = models.IntegerField(max_length=50)
-    cost = models.FloatField(null = False)
     def __str__(self):
         return f"{self.bus_name}"
     

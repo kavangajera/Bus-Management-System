@@ -79,6 +79,11 @@ def select_route(request):
     return render(request,'select_route.html',{'cities': City_Detail.objects.all()})
 
 def choose_bus(request):
+    busList = []
+    cities = []
+    fares = []
+    dis = 0
+    fare_ = 0
     source = request.session.get('source')
     destination = request.session.get('destination')
     source_order = CitiesOrder.objects.filter(city=source)
@@ -88,14 +93,33 @@ def choose_bus(request):
         for destination_city_order in destination_order:
             if source_city_order.route == destination_city_order.route:
                 route_list.append(source_city_order.route)
-    busList = [] 
+    
     for route in route_list:
         route.cities_order = CitiesOrder.objects.filter(route=route).order_by('order')
+        for city_order in route.cities_order:
+            cities.append(city_order.city.city)
+        start=0
+        end=0
+        for i in range(len(cities)):
+            if cities[i] == source:
+                start=i
+            if cities[i] == destination:
+                end = i
+        for i in range(start,end):
+            if (Distance.objects.filter(from_city=cities[i], to_city=cities[i+1]).exists()):
+                dis = dis + Distance.objects.get(from_city=cities[i],to_city=cities[i+1]).distance
+            elif (Distance.objects.filter(from_city=cities[i+1], to_city=cities[i]).exists()):
+                dis = dis + Distance.objects.get(from_city=cities[i+1],to_city=cities[i]).distance  
         bus_list = Bus_Detail.objects.filter(route=route)
-        for bus in bus_list:
-            busList.append(bus)
         
-    return render(request,'choose_bus.html',{'routes':busList})
+        for bus in bus_list:
+            print("hi")
+            fare_ = dis*bus.bus_type.fare
+            fares.append(fare_)
+            busList.append(bus)
+    
+    busId = zip(busList,fares)
+    return render(request,'choose_bus.html',{'buses':busList,'busId':busId})
 
 
 
@@ -106,7 +130,7 @@ def city(request):
        ct.save()
     return render(request,'city.html') 
 
-# def build_bus(request):
+
     
 def route(request):
     if request.method == 'POST':
@@ -178,21 +202,9 @@ def build_bus(request):
         r = Route_Detail.objects.get(source=source,destination=destination)
         
         seats = int(request.POST.get('seats'))
-        r.cities_order = CitiesOrder.objects.filter(route=r).order_by('order')
-        cities = []
-        dis = 0.0
-        for city_order in r.cities_order:
-                cities.append(city_order.city)
-        for i in range(0,len(cities)-1):
-                from_city = cities[i]
-                to_city = cities[i+1]
-                if (Distance.objects.filter(from_city=from_city, to_city=to_city).exists()):
-                    dis = dis + Distance.objects.get(from_city=from_city, to_city=to_city).distance
-                elif(Distance.objects.filter(from_city=to_city, to_city=from_city).exists()):
-                    dis = dis + Distance.objects.get(from_city=to_city, to_city=from_city).distance
-        total_fare = dis*b_type.fare
-        name = cities[0].city+'-'+cities[len(cities)-1].city
-        bus = Bus_Detail(bus_name=name,route=r,bus_type=b_type,seats=seats,cost=total_fare)
+        
+        name = cities[0]+'-'+cities[len(cities)-1]
+        bus = Bus_Detail(bus_name=name,route=r,bus_type=b_type,seats=seats)
         bus.save()
     return render(request,'build_bus.html',{'routes':Route_Detail.objects.all(),'bus_types':Bus_Type.objects.all()})
     
