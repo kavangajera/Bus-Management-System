@@ -5,6 +5,7 @@ from django.contrib import messages
 from datetime import datetime,date
 from geopy.geocoders import Nominatim
 from geopy import distance
+from django.db.models import Q
 
 def home(request):
     return render(request,'home.html')
@@ -80,13 +81,21 @@ def select_route(request):
 def choose_bus(request):
     source = request.session.get('source')
     destination = request.session.get('destination')
-    route_list = Route_Detail.objects.filter(source=source,destination=destination)
-    distance = 0
+    source_order = CitiesOrder.objects.filter(city=source)
+    destination_order = CitiesOrder.objects.filter(city=destination)
+    route_list = []
+    for source_city_order in source_order:
+        for destination_city_order in destination_order:
+            if source_city_order.route == destination_city_order.route:
+                route_list.append(source_city_order.route)
+    busList = [] 
     for route in route_list:
         route.cities_order = CitiesOrder.objects.filter(route=route).order_by('order')
-        # route.cities_orde
-        # distance = distance + Distance.objects.filter(from_city=,to_city=)
-    return render(request,'choose_bus.html',{'routes':route_list})
+        bus_list = Bus_Detail.objects.filter(route=route)
+        for bus in bus_list:
+            busList.append(bus)
+        
+    return render(request,'choose_bus.html',{'routes':busList})
 
 
 
@@ -158,7 +167,33 @@ def getDistance(source,destination):
         Distance.objects.create(from_city = source,to_city = destination,distance = dis)
 
 def build_bus(request):
-    route = 
+    if request.method=='POST':
+        route = request.POST.get('route')
+        bus_type = request.POST.get('bus_type')
+        b_type = Bus_Type.objects.get(bus_type=bus_type)
+        cities = route.split('-')
+        cities = [city.strip() for city in cities]
+        source = cities[0]
+        destination = cities[1]
+        r = Route_Detail.objects.get(source=source,destination=destination)
+        
+        seats = int(request.POST.get('seats'))
+        r.cities_order = CitiesOrder.objects.filter(route=r).order_by('order')
+        cities = []
+        dis = 0.0
+        for city_order in r.cities_order:
+                cities.append(city_order.city)
+        for i in range(0,len(cities)-1):
+                from_city = cities[i]
+                to_city = cities[i+1]
+                if (Distance.objects.filter(from_city=from_city, to_city=to_city).exists()):
+                    dis = dis + Distance.objects.get(from_city=from_city, to_city=to_city).distance
+                elif(Distance.objects.filter(from_city=to_city, to_city=from_city).exists()):
+                    dis = dis + Distance.objects.get(from_city=to_city, to_city=from_city).distance
+        total_fare = dis*b_type.fare
+        name = cities[0].city+'-'+cities[len(cities)-1].city
+        bus = Bus_Detail(bus_name=name,route=r,bus_type=b_type,seats=seats,cost=total_fare)
+        bus.save()
     return render(request,'build_bus.html',{'routes':Route_Detail.objects.all(),'bus_types':Bus_Type.objects.all()})
     
 

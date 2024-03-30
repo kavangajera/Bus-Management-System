@@ -11,6 +11,7 @@ urlpatterns = [
     path('city/',views.city,name="city"),
     path('choose_bus/',views.choose_bus,name='choose_bus'),
     path('route/',views.route,name="route"),
-    path('build_bus/',views.build_bus,name="build_bus")
+    path('build_bus/',views.build_bus,name="build_bus"),
+    # path('')
     # Add other URLs as needed
 ]

@@ -18,14 +18,14 @@
             {% endfor %}
         </select>
         <br>
-        {% for route in routes %}
+        {% comment %} {% for route in routes %}
     <p>{{ route.source }} - {{ route.destination }}</p>
     <ul>
     {% for city_order in route.cities_order %}
         <li>{{ city_order.city }}&nbsp{{ city_order.time}}</li>
     {% endfor %}
     </ul>
-{% endfor %}
+{% endfor %} {% endcomment %}
         <button type="submit">Search</button>
      </form>
      <script src="{% static 'js/script.js' %}"></script>
