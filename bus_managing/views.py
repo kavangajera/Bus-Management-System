@@ -1,6 +1,7 @@
 from django.contrib.auth import login,authenticate,logout
+from django.http import HttpResponse
 from django.shortcuts import render, redirect
-from .models import CustomUser,City_Detail,Route_Detail,CitiesOrder,Distance,Bus_Detail,Bus_Type
+from .models import CustomUser,City_Detail,Route_Detail,CitiesOrder,Distance,Bus_Detail,Bus_Type,Bus_Seats,Advance_booking
 from django.contrib import messages
 from datetime import datetime,date
 from geopy.geocoders import Nominatim
@@ -79,11 +80,14 @@ def select_route(request):
     return render(request,'select_route.html',{'cities': City_Detail.objects.all()})
 
 def choose_bus(request):
+    
+    bus_data = []
     busList = []
     cities = []
     fares = []
+    times = []
     dis = 0
-    fare_ = 0
+   
     source = request.session.get('source')
     destination = request.session.get('destination')
     source_order = CitiesOrder.objects.filter(city=source)
@@ -95,9 +99,13 @@ def choose_bus(request):
                 route_list.append(source_city_order.route)
     
     for route in route_list:
+        dis = 0
+        
+        cities = []
         route.cities_order = CitiesOrder.objects.filter(route=route).order_by('order')
         for city_order in route.cities_order:
             cities.append(city_order.city.city)
+            times.append(city_order.time)
         start=0
         end=0
         for i in range(len(cities)):
@@ -112,17 +120,91 @@ def choose_bus(request):
                 dis = dis + Distance.objects.get(from_city=cities[i+1],to_city=cities[i]).distance  
         bus_list = Bus_Detail.objects.filter(route=route)
         
+       
         for bus in bus_list:
-            print("hi")
-            fare_ = dis*bus.bus_type.fare
-            fares.append(fare_)
-            busList.append(bus)
+            fare = dis * bus.bus_type.fare
+            fares.append(fare)
+            city_time = zip(cities,times)
+            bus_data.append({
+                'bus': bus,
+                'fare': fare,
+                'city_time':city_time
+            })
+    if request.method == 'POST':
+        bus_id = request.POST.get('bus')
+        for bus_d in bus_data:
+            if bus_d['bus'].bus_name == bus_id:
+                request.session['bus'] = bus_id
+                request.session['fare'] = bus_d['fare']
+                cities,times = zip(*bus_d['city_time'])
+                times_str = [str(time) for time in times]
+                request.session['cities'] = cities
+                request.session['times'] = times_str
+        return redirect('choose_seat')      
+         
+    return render(request,'choose_bus.html',{'bus_data': bus_data})
+
+
+def choose_seat(request):
     
-    busId = zip(busList,fares)
-    return render(request,'choose_bus.html',{'buses':busList,'busId':busId})
-
-
-
+    bus_data = []
+    source = request.session.get('source')
+    destination = request.session.get('destination')
+    bus=request.session.get('bus')
+    bus_obj = Bus_Detail.objects.get(bus_name=bus)
+    fare = float(request.session.get('fare'))
+    times = request.session.get('times')
+    cities = request.session.get('cities')
+    city_time = zip(cities,times)
+    arr_dep = []
+    bus_data.append({
+                'bus': bus_obj,
+                'fare': fare,
+                'city_time':city_time
+            })
+   
+    
+    seats_per_row = 15  # 15 seats in one row
+    total_seats = bus_obj.seats
+    
+    # Calculate the number of rows for each set with a gap in between
+    num_rows_first_set = (total_seats // seats_per_row) // 2
+    num_rows_second_set = total_seats // seats_per_row - num_rows_first_set
+    
+    seat_arrangement = []
+    
+    # First set of rows
+    for row in range(num_rows_first_set):
+        row_seats = [{'number': f'{row+1}{chr(65+i)}', 'available': True} for i in range(seats_per_row)]
+        if not Bus_Seats.objects.filter(seat_no=row_seats).exists():   
+            Bus_Seats.objects.create(bus_name=bus_obj,seat_no=row_seats)
+        seat_arrangement.append(row_seats)
+    
+    # Add gap
+    seat_arrangement.append([])
+    
+    # Second set of rows
+    for row in range(num_rows_first_set, num_rows_first_set + num_rows_second_set):
+        row_seats = [{'number': f'{row+1}{chr(65+i)}', 'available': True} for i in range(seats_per_row)]
+        seat_arrangement.append(row_seats)
+    if request.method == 'POST':
+        for city,time in city_time:
+            if city ==source:
+                arr_dep.append(time)
+            if city == destination:
+                arr_dep.append(time)
+        selected_seats = request.POST.get('selected_seats', '').split(',')  # Retrieve selected seats from POST data
+        name = request.POST.get('name')
+        age = request.POST.get('age')
+        print("Selected Seats:", selected_seats)  # Print selected seats in console
+        
+        seats = len(selected_seats)
+        total_fare = fare*seats
+        adv_book = Advance_booking(PNR='G1-73771234',bus_info=f'{source}-{destination}',username=request.user.username,phone=request.user.phone,name=name,seat_nos=selected_seats,seats=seats,bus_name=bus,total_fare=total_fare,arrival_time=arr_dep[0],departure_time=arr_dep[1],txn_password=request.user.password)
+        adv_book.save()
+        return redirect('payment')
+    return render(request,'bus_view.html',{'bus_data':bus_data,'seat_arrangement':seat_arrangement})
+    
 def city(request):
     if request.method =='POST':   
        city = request.POST.get('city')
@@ -130,7 +212,8 @@ def city(request):
        ct.save()
     return render(request,'city.html') 
 
-
+def payment(request):
+    return render(request,'payment.html')
     
 def route(request):
     if request.method == 'POST':

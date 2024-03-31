@@ -15,11 +15,16 @@ class CustomUser(AbstractUser):
     
 class Advance_booking(models.Model):
     PNR = models.CharField(max_length=122, blank=False, null=False)
+    bus_info = models.CharField(max_length=122, blank=False, null=False)
     username = models.CharField(max_length=122, blank=False, null=False)
+    phone = models.CharField(max_length=15, blank=True, null=True)
     name = models.CharField(max_length=122, blank=False, null=False)
+    seat_nos = models.CharField(max_length=122, blank=False, null=False)
     seats = models.PositiveIntegerField(max_length=40, blank=False, null=False)
-    bus_name = bus_name = models.CharField(max_length=122,blank=False, null=False)
+    bus_name = models.CharField(max_length=122,blank=False, null=False)
     total_fare = models.FloatField(max_length=15,blank = False,null=False)
+    arrival_time = models.CharField(max_length=122, blank=False, null=False)
+    departure_time = models.CharField(max_length=122, blank=False, null=False)
     txn_password = models.CharField(max_length=122, blank=False, null=False)
     
 class City_Detail(models.Model):
@@ -72,7 +77,9 @@ class Bus_Detail(models.Model):
         return f"{self.bus_name}"
     
     
-    
+class Bus_Seats(models.Model):
+    bus_name = models.ForeignKey(Bus_Detail,blank=True, null=True,on_delete=models.CASCADE)
+    seat_no =  models.CharField(max_length=122)
 
     
     

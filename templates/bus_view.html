@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+{% include 'navbar.html' %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bus Seating Arrangement</title>
+    <style>
+        /* Add your CSS styles here */
+        .bus-layout {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .row {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        .seat {
+            width: 30px; /* Default seat width */
+            height: 30px;
+            border: 1px solid #ccc;
+            margin-right: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.8em;
+            cursor: pointer;
+        }
+        .seat.available {
+            background-color: #c3e6cb; /* Green */
+        }
+        .seat.booked {
+            background-color: #f5c6cb; /* Red */
+        }
+        .seat.selected {
+            background-color: #ffc107; /* Yellow */
+        }
+        .logo {
+            margin-left: 403px;
+            margin-bottom: -36px;
+            /* Set max-width to prevent stretching */
+            max-width: 30px; /* Set the max-width to match the width of one seat */
+            height: auto; /* Maintain aspect ratio */
+        }
+    </style>
+</head>
+<body>
+    <ul>
+        {% for data in bus_data %}
+                <li>BusName: {{ data.bus.bus_name }}</li> 
+                <li>Fare: {{ data.fare }}</li>
+                <li>Cities and Times:</li>
+                <select name="cities_times">
+                    {% for city, time in data.city_time %}
+                        <option value="{{ city }}">{{ city }} - {{ time }}</option>
+                    {% endfor %}
+                </select> 
+            {% endfor %}
+    </ul>
+
+    <!-- Load static files -->
+    {% load static %}
+    
+    <!-- Add the logo before the seat arrangement -->
+    <img src="{% static 'images/steering_wheel.png' %}" alt="Steering Wheel Logo" class="logo">
+
+    <form action="{% url 'choose_seat' %}" method="post">
+        {% csrf_token %}
+        <input type="text" name="name" placeholder="Name"><br>
+        <input type="text" name="age" placeholder="age"><br><br>
+        <div class="bus-layout">
+            {% for row in seat_arrangement %}
+                <div class="row">
+                    {% for seat in row %}
+                        <div class="seat {% if seat.available %}available{% else %}booked{% endif %}" data-seat="{{ seat.number }}" onclick="selectSeat(this)">
+                            {{ seat.number }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+        <input type="hidden" name="selected_seats" id="selected_seats">
+        <p id="selected_seats_display"></p>
+        <button type="submit">Submit</button>
+    </form>
+
+    <script>
+        var selectedSeats = [];
+        
+        // Get the width of one seat
+        var seatWidth = document.querySelector('.seat').offsetWidth;
+        // Set the width of the logo to match the width of one seat
+        document.querySelector('.logo').style.maxWidth = seatWidth + 'px';
+
+        function selectSeat(seatElement) {
+            if (seatElement.classList.contains("booked")) {
+                return; // Do not allow selection of booked seats
+            }
+
+            var seatNumber = seatElement.getAttribute("data-seat");
+
+            if (selectedSeats.includes(seatNumber)) {
+                // Deselect the seat if already selected
+                seatElement.classList.remove("selected");
+                selectedSeats = selectedSeats.filter(function(number) {
+                    return number !== seatNumber;
+                });
+            } else {
+                // Select the seat if not already selected
+                seatElement.classList.add("selected");
+                selectedSeats.push(seatNumber);
+            }
+
+            // Update the hidden input field with selected seat numbers
+            document.getElementById('selected_seats').value = selectedSeats.join(',');
+            
+            // Update the display to show selected seats
+            document.getElementById('selected_seats_display').textContent = "Selected Seats: " + selectedSeats.join(', ');
+        }
+    </script>
+</body>
+</html>

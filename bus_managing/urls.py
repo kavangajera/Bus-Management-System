@@ -12,6 +12,7 @@ urlpatterns = [
     path('choose_bus/',views.choose_bus,name='choose_bus'),
     path('route/',views.route,name="route"),
     path('build_bus/',views.build_bus,name="build_bus"),
-    # path('')
+    path('choose_seat/',views.choose_seat,name='choose_seat'),
+    path('payment/',views.payment,name="payment")
     # Add other URLs as needed
 ]

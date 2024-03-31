@@ -11,20 +11,24 @@
 <body>
      <form action="{% url 'choose_bus' %}"  method="post">
         {%csrf_token%}
-        <label for="route">Routes:</label>
-        <select name="route">
-            {% for bus in buses %}
-                <option value="{{ bus.bus_name }}">{{ bus.bus_name }}</option>
+        <label for="bus">Routes:</label>
+        <select name="bus">
+            {% for data in bus_data %}
+                <option value="{{ data.bus.bus_name }}">{{ data.bus.bus_name }}</option>
             {% endfor %}
         </select>
         <br>
-        <h2></h2>
         <ul>
-        {% for bus,fare in busId%}
-        
-        <li>BusName:{{bus}} Fare:{{fare}}</li>
-
-        {%endfor%}
+            {% for data in bus_data %}
+                <li>BusName: {{ data.bus.bus_name }}</li> 
+                <li>Fare: {{ data.fare }}</li>
+                <li>Cities and Times:</li>
+                  <select name="cities_times">
+                    {% for city, time in data.city_time %}
+                        <option value="{{ city }}">{{ city }} - {{ time }}</option>
+                    {% endfor %}
+                </select> 
+            {% endfor %}
         </ul>
        
         <button type="submit">Search</button>
