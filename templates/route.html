@@ -70,6 +70,9 @@
     </style>
 </head>
 <body>
+    {% if not request.user.is_authenticated %}
+    <script>window.location.href = "{% url 'login_view' %}"</script>
+{% endif %}
     <h1>Route Detail</h1>
 
     <form method="post" action="{% url 'route' %}">

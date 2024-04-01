@@ -77,6 +77,8 @@ def select_route(request):
     if request.method == 'POST':
         source = request.POST.get('source')
         destination = request.POST.get('destination')
+        date = request.POST.get('date')
+        request.session['date'] = date
         request.session['source'] = source
         request.session['destination'] = destination
         return redirect('choose_bus')
@@ -91,7 +93,8 @@ def choose_bus(request):
     fares = []
     times = []
     dis = 0
-   
+    date = request.session.get('date')
+    
     source = request.session.get('source')
     destination = request.session.get('destination')
     source_order = CitiesOrder.objects.filter(city=source)
@@ -122,7 +125,7 @@ def choose_bus(request):
                 dis = dis + Distance.objects.get(from_city=cities[i],to_city=cities[i+1]).distance
             elif (Distance.objects.filter(from_city=cities[i+1], to_city=cities[i]).exists()):
                 dis = dis + Distance.objects.get(from_city=cities[i+1],to_city=cities[i]).distance  
-        bus_list = Bus_Detail.objects.filter(route=route)
+        bus_list = Bus_Detail.objects.filter(route=route,date=date)
         
        
         for bus in bus_list:
@@ -159,6 +162,7 @@ def choose_seat(request):
     fare = float(request.session.get('fare'))
     times = request.session.get('times')
     cities = request.session.get('cities')
+    date = request.session.get('date')
     city_time = zip(cities,times)
     arr_dep = []
     bus_data.append({
@@ -180,8 +184,8 @@ def choose_seat(request):
     # First set of rows
     for row in range(num_rows_first_set):
         row_seats = [{'number': f'{row+1}{chr(65+i)}', 'available': True} for i in range(seats_per_row)]
-        if not Bus_Seats.objects.filter(bus_name=bus_obj,seat_no__in=[seat['number'] for seat in row_seats]).exists():   
-           bus_seats = [Bus_Seats(bus_name=bus_obj, seat_no=seat['number'], available=seat['available']) for seat in row_seats]
+        if not Bus_Seats.objects.filter(bus_name=bus_obj,date=date,seat_no__in=[seat['number'] for seat in row_seats]).exists():   
+           bus_seats = [Bus_Seats(bus_name=bus_obj,date=date,seat_no=seat['number'], available=seat['available']) for seat in row_seats]
            Bus_Seats.objects.bulk_create(bus_seats)
         seat_arrangement.append(row_seats)
     
@@ -191,12 +195,12 @@ def choose_seat(request):
     # Second set of rows
     for row in range(num_rows_first_set, num_rows_first_set + num_rows_second_set):
         row_seats = [{'number': f'{row+1}{chr(65+i)}', 'available': True} for i in range(seats_per_row)]
-        if not Bus_Seats.objects.filter(bus_name=bus_obj,seat_no__in=[seat['number'] for seat in row_seats]).exists():   
-           bus_seats = [Bus_Seats(bus_name=bus_obj, seat_no=seat['number'], available=seat['available']) for seat in row_seats]
+        if not Bus_Seats.objects.filter(bus_name=bus_obj,date=date,seat_no__in=[seat['number'] for seat in row_seats]).exists():   
+           bus_seats = [Bus_Seats(bus_name=bus_obj,date=date,seat_no=seat['number'], available=seat['available']) for seat in row_seats]
            Bus_Seats.objects.bulk_create(bus_seats)
         seat_arrangement.append(row_seats)
     selected_seats=[]
-    unavailable_seats = Bus_Seats.objects.filter(bus_name=bus_obj, available=False).values_list('seat_no', flat=True)
+    unavailable_seats = Bus_Seats.objects.filter(bus_name=bus_obj,date=date,available=False).values_list('seat_no', flat=True)
     print(unavailable_seats)
     
     if request.method == 'POST':
@@ -211,14 +215,17 @@ def choose_seat(request):
         age = request.POST.get('age')
         print("Selected Seats:", selected_seats)  # Print selected seats in console
         seats = len(selected_seats)
-        total_fare = fare*seats
-        adv_book = Advance_booking(PNR='G1-73771234',bus_info=f'{source}-{destination}',username=request.user.username,phone=request.user.phone,name=name,seat_nos=selected_seats,seats=seats,bus_name=bus,total_fare=total_fare,arrival_time=arr_dep[0],departure_time=arr_dep[1],txn_password=request.user.password)
+        print("Seats:",seats)
+        print("fare:",fare)
+        total_fare = int(fare*seats)
+        adv_book = Advance_booking(PNR='G1-73771234',bus_info=f'{source}-{destination}',doj=date,username=request.user.username,phone=request.user.phone,name=name,seat_nos=selected_seats,seats=seats,bus_name=bus,total_fare=total_fare,arrival_time=arr_dep[0],departure_time=arr_dep[1],txn_password=request.user.password)
         adv_book.save()
         for seat_number in selected_seats:
-           bus_seat = Bus_Seats.objects.get(bus_name=bus_obj, seat_no=seat_number)
+           bus_seat = Bus_Seats.objects.get(bus_name=bus_obj,date=date,seat_no=seat_number)
            bus_seat.available = False
            bus_seat.save()
         
+        request.session['total_fare']=total_fare
         return redirect('payment')
     return render(request,'bus_view.html',{'bus_data':bus_data,'seat_arrangement':seat_arrangement,'unavailable_seats':list(unavailable_seats)})
     
@@ -235,8 +242,8 @@ def route(request):
     if request.method == 'POST':
         source_name = request.POST.get('source')
         destination_name = request.POST.get('destination')
-
-       
+        
+        
         source = City_Detail.objects.get(city=source_name)
         destination = City_Detail.objects.get(city=destination_name)
 
@@ -293,6 +300,7 @@ def build_bus(request):
     if request.method=='POST':
         route = request.POST.get('route')
         bus_type = request.POST.get('bus_type')
+        date = request.POST.get('date')
         b_type = Bus_Type.objects.get(bus_type=bus_type)
         cities = route.split('-')
         cities = [city.strip() for city in cities]
@@ -303,19 +311,20 @@ def build_bus(request):
         seats = int(request.POST.get('seats'))
         
         name = cities[0]+'-'+cities[len(cities)-1]
-        bus = Bus_Detail(bus_name=name,route=r,bus_type=b_type,seats=seats)
+        bus = Bus_Detail(bus_name=name,date=date,route=r,bus_type=b_type,seats=seats)
         bus.save()
     return render(request,'build_bus.html',{'routes':Route_Detail.objects.all(),'bus_types':Bus_Type.objects.all()})
     
 
 def payment(request):
-    if request.method == 'POST':
-        amount = 50000
-        order_currency = 'INR'
-        client = razorpay.Client(auth=('rzp_test_2PoNkDRlls7sqc','sZbVkneymPHcNgdVm8YViAnY'))
-        payment = client.order.create({'amount':amount,'currency':'INR','payment_capture':'1'})
-    return render(request,'payment.html')
+    amount = request.session.get('total_fare')*100
+    order_currency = 'INR'
+    client = razorpay.Client(auth=('rzp_test_2PoNkDRlls7sqc','sZbVkneymPHcNgdVm8YViAnY'))
+    payment = client.order.create({'amount':amount,'currency':'INR','payment_capture':'1'})
+    context = {'payment':payment,'amount':amount}
+    return render(request,'payment.html',context)
 
 @csrf_exempt
 def success(request):
     return render(request, 'success.html')
+ 

@@ -9,6 +9,9 @@
     <title>Select Bus</title>
 </head>
 <body>
+    {% if not request.user.is_authenticated %}
+        <script>window.location.href = "{% url 'login_view' %}"</script>
+    {% endif %}
      <form action="{% url 'choose_bus' %}"  method="post">
         {%csrf_token%}
         <label for="bus">Routes:</label>

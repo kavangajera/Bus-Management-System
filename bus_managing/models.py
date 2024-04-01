@@ -16,6 +16,7 @@ class CustomUser(AbstractUser):
 class Advance_booking(models.Model):
     PNR = models.CharField(max_length=122, blank=False, null=False)
     bus_info = models.CharField(max_length=122, blank=False, null=False)
+    doj = models.CharField(max_length=122, blank=False, null=False)
     username = models.CharField(max_length=122, blank=False, null=False)
     phone = models.CharField(max_length=15, blank=True, null=True)
     name = models.CharField(max_length=122, blank=False, null=False)
@@ -70,6 +71,7 @@ class Bus_Type(models.Model):
 class Bus_Detail(models.Model):
     bus_id = models.AutoField(primary_key=True)
     bus_name = models.CharField(max_length=122)
+    date = models.CharField(max_length=122)
     route = models.ForeignKey(Route_Detail,blank=True, null=True,on_delete=models.CASCADE)
     bus_type = models.ForeignKey(Bus_Type,max_length=122, blank=True, null=True,on_delete=models.CASCADE)
     seats = models.IntegerField(max_length=50)
@@ -79,6 +81,7 @@ class Bus_Detail(models.Model):
     
 class Bus_Seats(models.Model):
     bus_name = models.ForeignKey(Bus_Detail,blank=True, null=True,on_delete=models.CASCADE)
+    date = models.CharField(max_length=122)
     seat_no =  models.CharField(max_length=122)
     available = models.BooleanField()
     

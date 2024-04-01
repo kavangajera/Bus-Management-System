@@ -20,6 +20,8 @@
         <a href="{% url 'build_bus' %}">Build Bus</a><br>
 
     {% endif %}
-
+    {% if not request.user.is_authenticated %}
+        <script>window.location.href = "{% url 'login_view' %}"</script>
+    {% endif %}
 </body>
 </html>

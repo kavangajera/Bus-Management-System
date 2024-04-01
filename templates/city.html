@@ -68,6 +68,9 @@
     </style>
 </head>
 <body>
+    {% if not request.user.is_authenticated %}
+        <script>window.location.href = "{% url 'login_view' %}"</script>
+    {% endif %}
     <h1>Manage City</h1>
     <form action="{% url 'city' %}" method="post">
         {%csrf_token%}

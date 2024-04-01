@@ -46,6 +46,9 @@
     </style>
 </head>
 <body>
+    {% if not request.user.is_authenticated %}
+        <script>window.location.href = "{% url 'login_view' %}"</script>
+    {% endif %}
     <ul>
         {% for data in bus_data %}
                 <li>BusName: {{ data.bus.bus_name }}</li> 

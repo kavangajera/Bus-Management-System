@@ -9,6 +9,9 @@
 
 </head>
 <body>
+    {% if not request.user.is_authenticated %}
+    <script>window.location.href = "{% url 'login_view' %}"</script>
+{% endif %}
      <form action="{% url 'select_route' %}"  method="post">
         {%csrf_token%}
         <label for="source">Source:</label>
@@ -25,6 +28,7 @@
             {% endfor %}
         </select>
         <br>
+        <input type="date" placeholder="Date" name="date">
         <button type="submit">Search</button>
      </form>
     

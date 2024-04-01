@@ -8,6 +8,9 @@
     <title>Build Bus</title>
 </head>
 <body>
+    {% if not request.user.is_authenticated %}
+        <script>window.location.href = "{% url 'login_view' %}"</script>
+    {% endif %}
     <form action="{% url 'build_bus' %}" method="post">
         {%csrf_token%}
         <label for="route">Route:</label>
@@ -22,9 +25,13 @@
                 <option value="{{ b_type }}">{{ b_type }}</option>
             {% endfor %}
         </select><br>
+        
         <input type="number" name="seats" placeholder="seats">
         <br>
+        BOJ:<input type="date" placeholder="Date" name="date">
+        <br>
         <button type="submit">Build</button>
+        
     </form>
 </body>
 </html>
