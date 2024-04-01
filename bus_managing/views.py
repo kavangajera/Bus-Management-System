@@ -1,12 +1,16 @@
 from django.contrib.auth import login,authenticate,logout
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
+
+from BMS.settings import RAZORPAY_API_KEY, RAZORPAY_API_SECRET_KEY
 from .models import CustomUser,City_Detail,Route_Detail,CitiesOrder,Distance,Bus_Detail,Bus_Type,Bus_Seats,Advance_booking
 from django.contrib import messages
 from datetime import datetime,date
 from geopy.geocoders import Nominatim
 from geopy import distance
 from django.db.models import Q
+import razorpay
+from django.views.decorators.csrf import csrf_exempt
 
 def home(request):
     return render(request,'home.html')
@@ -166,7 +170,7 @@ def choose_seat(request):
     
     seats_per_row = 15  # 15 seats in one row
     total_seats = bus_obj.seats
-    
+    print(total_seats)
     # Calculate the number of rows for each set with a gap in between
     num_rows_first_set = (total_seats // seats_per_row) // 2
     num_rows_second_set = total_seats // seats_per_row - num_rows_first_set
@@ -176,8 +180,9 @@ def choose_seat(request):
     # First set of rows
     for row in range(num_rows_first_set):
         row_seats = [{'number': f'{row+1}{chr(65+i)}', 'available': True} for i in range(seats_per_row)]
-        if not Bus_Seats.objects.filter(seat_no=row_seats).exists():   
-            Bus_Seats.objects.create(bus_name=bus_obj,seat_no=row_seats)
+        if not Bus_Seats.objects.filter(bus_name=bus_obj,seat_no__in=[seat['number'] for seat in row_seats]).exists():   
+           bus_seats = [Bus_Seats(bus_name=bus_obj, seat_no=seat['number'], available=seat['available']) for seat in row_seats]
+           Bus_Seats.objects.bulk_create(bus_seats)
         seat_arrangement.append(row_seats)
     
     # Add gap
@@ -186,7 +191,14 @@ def choose_seat(request):
     # Second set of rows
     for row in range(num_rows_first_set, num_rows_first_set + num_rows_second_set):
         row_seats = [{'number': f'{row+1}{chr(65+i)}', 'available': True} for i in range(seats_per_row)]
+        if not Bus_Seats.objects.filter(bus_name=bus_obj,seat_no__in=[seat['number'] for seat in row_seats]).exists():   
+           bus_seats = [Bus_Seats(bus_name=bus_obj, seat_no=seat['number'], available=seat['available']) for seat in row_seats]
+           Bus_Seats.objects.bulk_create(bus_seats)
         seat_arrangement.append(row_seats)
+    selected_seats=[]
+    unavailable_seats = Bus_Seats.objects.filter(bus_name=bus_obj, available=False).values_list('seat_no', flat=True)
+    print(unavailable_seats)
+    
     if request.method == 'POST':
         for city,time in city_time:
             if city ==source:
@@ -194,16 +206,21 @@ def choose_seat(request):
             if city == destination:
                 arr_dep.append(time)
         selected_seats = request.POST.get('selected_seats', '').split(',')  # Retrieve selected seats from POST data
+        
         name = request.POST.get('name')
         age = request.POST.get('age')
         print("Selected Seats:", selected_seats)  # Print selected seats in console
-        
         seats = len(selected_seats)
         total_fare = fare*seats
         adv_book = Advance_booking(PNR='G1-73771234',bus_info=f'{source}-{destination}',username=request.user.username,phone=request.user.phone,name=name,seat_nos=selected_seats,seats=seats,bus_name=bus,total_fare=total_fare,arrival_time=arr_dep[0],departure_time=arr_dep[1],txn_password=request.user.password)
         adv_book.save()
+        for seat_number in selected_seats:
+           bus_seat = Bus_Seats.objects.get(bus_name=bus_obj, seat_no=seat_number)
+           bus_seat.available = False
+           bus_seat.save()
+        
         return redirect('payment')
-    return render(request,'bus_view.html',{'bus_data':bus_data,'seat_arrangement':seat_arrangement})
+    return render(request,'bus_view.html',{'bus_data':bus_data,'seat_arrangement':seat_arrangement,'unavailable_seats':list(unavailable_seats)})
     
 def city(request):
     if request.method =='POST':   
@@ -212,8 +229,7 @@ def city(request):
        ct.save()
     return render(request,'city.html') 
 
-def payment(request):
-    return render(request,'payment.html')
+
     
 def route(request):
     if request.method == 'POST':
@@ -292,4 +308,14 @@ def build_bus(request):
     return render(request,'build_bus.html',{'routes':Route_Detail.objects.all(),'bus_types':Bus_Type.objects.all()})
     
 
+def payment(request):
+    if request.method == 'POST':
+        amount = 50000
+        order_currency = 'INR'
+        client = razorpay.Client(auth=('rzp_test_2PoNkDRlls7sqc','sZbVkneymPHcNgdVm8YViAnY'))
+        payment = client.order.create({'amount':amount,'currency':'INR','payment_capture':'1'})
+    return render(request,'payment.html')
 
+@csrf_exempt
+def success(request):
+    return render(request, 'success.html')

@@ -17,6 +17,10 @@
         <p>Not logged in</p>
         {% endif %}
     {% endif %}
+    {% if not request.user.is_authenticated %}
+        <script>window.location.href = "{% url 'login_view' %}"</script>
+    {% endif %}
+
 
 </body>
 </html>

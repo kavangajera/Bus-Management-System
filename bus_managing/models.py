@@ -80,7 +80,7 @@ class Bus_Detail(models.Model):
 class Bus_Seats(models.Model):
     bus_name = models.ForeignKey(Bus_Detail,blank=True, null=True,on_delete=models.CASCADE)
     seat_no =  models.CharField(max_length=122)
-
+    available = models.BooleanField()
     
     
 

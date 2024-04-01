@@ -70,12 +70,23 @@
         <input type="text" name="name" placeholder="Name"><br>
         <input type="text" name="age" placeholder="age"><br><br>
         <div class="bus-layout">
+            
             {% for row in seat_arrangement %}
                 <div class="row">
                     {% for seat in row %}
-                        <div class="seat {% if seat.available %}available{% else %}booked{% endif %}" data-seat="{{ seat.number }}" onclick="selectSeat(this)">
-                            {{ seat.number }}
-                        </div>
+                    
+                    
+                   {%if seat.number in unavailable_seats%}
+                    <div class="seat booked" data-seat="{{ seat.number }}" onclick="selectSeat(this)">
+                        {{ seat.number }}
+                    </div>
+                    {%else%}
+                   
+                    <div class="seat available" data-seat="{{ seat.number }}" onclick="selectSeat(this)">
+                        {{ seat.number }}
+                    </div>
+                    {%endif%}
+                    
                     {% endfor %}
                 </div>
             {% endfor %}
@@ -87,17 +98,23 @@
 
     <script>
         var selectedSeats = [];
-        
         // Get the width of one seat
         var seatWidth = document.querySelector('.seat').offsetWidth;
         // Set the width of the logo to match the width of one seat
         document.querySelector('.logo').style.maxWidth = seatWidth + 'px';
 
+
+        function isBooked(seatNumber){
+            console.log();
+           return seatNumber==="1A";
+        
+        }
         function selectSeat(seatElement) {
+            console.log(seatElement);
             if (seatElement.classList.contains("booked")) {
                 return; // Do not allow selection of booked seats
             }
-
+            
             var seatNumber = seatElement.getAttribute("data-seat");
 
             if (selectedSeats.includes(seatNumber)) {

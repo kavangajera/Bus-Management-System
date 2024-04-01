@@ -13,6 +13,7 @@ urlpatterns = [
     path('route/',views.route,name="route"),
     path('build_bus/',views.build_bus,name="build_bus"),
     path('choose_seat/',views.choose_seat,name='choose_seat'),
-    path('payment/',views.payment,name="payment")
+    path('payment/',views.payment,name="payment"),
+     path('success/' , views.success , name='success')
     # Add other URLs as needed
 ]
