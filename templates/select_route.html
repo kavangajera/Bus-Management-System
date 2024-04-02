@@ -6,7 +6,59 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Select Route</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            background-color: #1a237e; /* Dark Blue */
+            color: #ffc107; /* Yellow */
+        }
 
+        form {
+            max-width: 500px;
+            margin: 20px auto;
+            background-color: #0d47a1; /* Darker Blue */
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #ffc107; /* Yellow */
+        }
+
+        select, input[type="date"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ffc107; /* Yellow */
+            border-radius: 5px;
+            box-sizing: border-box;
+            background-color: #1a237e; /* Dark Blue */
+            color: #ffc107; /* Yellow */
+        }
+
+        select:focus, input[type="date"]:focus {
+            outline: none;
+        }
+
+        button {
+            background-color: #ffc107; /* Yellow */
+            color: #1a237e; /* Dark Blue */
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #ffd54f; /* Lighter Yellow */
+        }
+    </style>
 </head>
 <body>
     {% if not request.user.is_authenticated %}

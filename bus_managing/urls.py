@@ -14,6 +14,8 @@ urlpatterns = [
     path('build_bus/',views.build_bus,name="build_bus"),
     path('choose_seat/',views.choose_seat,name='choose_seat'),
     path('payment/',views.payment,name="payment"),
-     path('success/' , views.success , name='success')
+    path('success/' , views.success , name='success'),
+    path('cancel/',views.cancel,name="cancel"),
+    path('cancel_seats/',views.cancel_seats,name="cancel_seats")
     # Add other URLs as needed
 ]

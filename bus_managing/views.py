@@ -1,7 +1,7 @@
 from django.contrib.auth import login,authenticate,logout
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
-
+import string,random
 from BMS.settings import RAZORPAY_API_KEY, RAZORPAY_API_SECRET_KEY
 from .models import CustomUser,City_Detail,Route_Detail,CitiesOrder,Distance,Bus_Detail,Bus_Type,Bus_Seats,Advance_booking
 from django.contrib import messages
@@ -11,7 +11,8 @@ from geopy import distance
 from django.db.models import Q
 import razorpay
 from django.views.decorators.csrf import csrf_exempt
-
+import ast
+from twilio.rest import Client
 def home(request):
     return render(request,'home.html')
 
@@ -159,6 +160,7 @@ def choose_seat(request):
     destination = request.session.get('destination')
     bus=request.session.get('bus')
     bus_obj = Bus_Detail.objects.get(bus_name=bus)
+    
     fare = float(request.session.get('fare'))
     times = request.session.get('times')
     cities = request.session.get('cities')
@@ -201,8 +203,8 @@ def choose_seat(request):
         seat_arrangement.append(row_seats)
     selected_seats=[]
     unavailable_seats = Bus_Seats.objects.filter(bus_name=bus_obj,date=date,available=False).values_list('seat_no', flat=True)
-    print(unavailable_seats)
-    
+    bus_obj.available_seats = bus_obj.seats - len(unavailable_seats)
+    bus_obj.save()
     if request.method == 'POST':
         for city,time in city_time:
             if city ==source:
@@ -218,8 +220,15 @@ def choose_seat(request):
         print("Seats:",seats)
         print("fare:",fare)
         total_fare = int(fare*seats)
-        adv_book = Advance_booking(PNR='G1-73771234',bus_info=f'{source}-{destination}',doj=date,username=request.user.username,phone=request.user.phone,name=name,seat_nos=selected_seats,seats=seats,bus_name=bus,total_fare=total_fare,arrival_time=arr_dep[0],departure_time=arr_dep[1],txn_password=request.user.password)
+        characters = string.ascii_letters + string.digits
+        
+        txn = ''.join(random.choice(characters) for _ in range(5))
+        chars = string.digits
+        pnr = 'G1-'+''.join(random.choice(chars) for _ in range(8))
+        adv_book = Advance_booking(PNR=pnr,bus_info=f'{source}-{destination}',doj=date,username=request.user.username,phone=request.user.phone,name=name,seat_nos=selected_seats,seats=seats,bus_name=bus,total_fare=total_fare,arrival_time=arr_dep[0],departure_time=arr_dep[1],txn_password=txn)
+        
         adv_book.save()
+        request.session['pnr'] = adv_book.PNR
         for seat_number in selected_seats:
            bus_seat = Bus_Seats.objects.get(bus_name=bus_obj,date=date,seat_no=seat_number)
            bus_seat.available = False
@@ -299,6 +308,7 @@ def getDistance(source,destination):
 def build_bus(request):
     if request.method=='POST':
         route = request.POST.get('route')
+        name = request.POST.get('bus_name')
         bus_type = request.POST.get('bus_type')
         date = request.POST.get('date')
         b_type = Bus_Type.objects.get(bus_type=bus_type)
@@ -310,21 +320,71 @@ def build_bus(request):
         
         seats = int(request.POST.get('seats'))
         
-        name = cities[0]+'-'+cities[len(cities)-1]
         bus = Bus_Detail(bus_name=name,date=date,route=r,bus_type=b_type,seats=seats)
         bus.save()
     return render(request,'build_bus.html',{'routes':Route_Detail.objects.all(),'bus_types':Bus_Type.objects.all()})
     
 
 def payment(request):
+    pnr=request.session.get('pnr')
+    bus = Advance_booking.objects.get(PNR=pnr)
     amount = request.session.get('total_fare')*100
     order_currency = 'INR'
     client = razorpay.Client(auth=('rzp_test_2PoNkDRlls7sqc','sZbVkneymPHcNgdVm8YViAnY'))
     payment = client.order.create({'amount':amount,'currency':'INR','payment_capture':'1'})
-    context = {'payment':payment,'amount':amount}
+    context = {'payment':payment,'amount':amount,'bus':bus}
     return render(request,'payment.html',context)
 
 @csrf_exempt
 def success(request):
+    pnr='G1-08954618'
+    bus = Advance_booking.objects.get(PNR=pnr)
+    msg = "Route: "+bus.bus_info+'\n'+"Bus_Name"+bus.bus_name+'\n'+"Fare: "+str(bus.total_fare)+"DOJ: "+bus.doj+'\n'+"Seats: "+bus.seat_nos+'\n'+"Txnpass: "+bus.txn_password
+    account_sid = 'AC533cf4edf8c7b91b7f41992f452f9c8a'
+    auth_token = '235409a828c61edb487a494f6c38300a'
+    
+    twilio_number = '+12512548928'
+    my_number = '+919104854139'
+    client = Client(account_sid,auth_token)
+    message = client.messages.create(
+        body=msg,
+        from_=twilio_number,
+        to=my_number
+    )
+    print(message)
     return render(request, 'success.html')
+
+def cancel(request):
+    tickets=[]
+    
+    tickets=Advance_booking.objects.filter(username='kalu')
+    if request.method == 'POST':
+        PNR = request.POST.get('selected_ticket')
+        request.session['PNR'] = PNR    
+        return redirect('cancel_seats')
+    print(tickets)
+    return render(request,'cancel_ticket.html',{'tickets':tickets})
  
+def cancel_seats(request):
+    PNR = request.session.get('PNR')
+    ticket = Advance_booking.objects.get(PNR=PNR)
+    bus_obj = Bus_Detail.objects.get(bus_name=ticket.bus_name)
+    seats = ticket.seat_nos
+    ticket_list = ast.literal_eval(seats)
+    if request.method == 'POST':
+        selected_seats = request.POST.getlist('selected_seats')
+        txn_pass = request.POST.get('txn')
+        if txn_pass == ticket.txn_password:
+            for seat in selected_seats:
+                bus_seat = Bus_Seats.objects.get(bus_name=bus_obj,date=ticket.doj,seat_no=seat)
+                bus_seat.available = True
+                ticket_list.remove(seat)
+                ticket.seat_nos = ticket_list
+                if len(ticket_list) == 0:
+                    ticket.delete()
+                    
+                bus_seat.save()
+        else:
+            print("Enter correct txn password")
+            
+    return render(request,'cancel_seats.html',{'seats':ticket_list,'ticket':ticket})

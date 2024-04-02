@@ -6,7 +6,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Government Agent</title>
+    <style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        background-color: #1a237e; /* Dark Blue */
+        color: #ffc107; /* Yellow */
+    }
+
+    p {
+        text-align: center;
+        margin-top: 20px;
+        color: #fff;
+    }
+
+    a {
+        display: block;
+        text-align: center;
+        margin-top: 10px;
+        color: #ffd54f; /* Lighter Yellow */
+        text-decoration: none;
+    }
+
+    a:hover {
+        text-decoration: underline;
+    }
+</style>
 </head>
+
 <body>
     {% if user.is_authenticated %}
         {% if request.session.user_username %}

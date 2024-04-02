@@ -27,7 +27,7 @@ class Advance_booking(models.Model):
     arrival_time = models.CharField(max_length=122, blank=False, null=False)
     departure_time = models.CharField(max_length=122, blank=False, null=False)
     txn_password = models.CharField(max_length=122, blank=False, null=False)
-    
+
 class City_Detail(models.Model):
     city = models.CharField(max_length=122, primary_key=True)
     def __str__(self):
@@ -75,6 +75,7 @@ class Bus_Detail(models.Model):
     route = models.ForeignKey(Route_Detail,blank=True, null=True,on_delete=models.CASCADE)
     bus_type = models.ForeignKey(Bus_Type,max_length=122, blank=True, null=True,on_delete=models.CASCADE)
     seats = models.IntegerField(max_length=50)
+    available_seats = models.IntegerField(max_length=50,default=seats)
     def __str__(self):
         return f"{self.bus_name}"
     

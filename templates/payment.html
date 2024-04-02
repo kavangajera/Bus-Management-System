@@ -1,16 +1,97 @@
-
+{% load static %}
+{% include 'navbar.html' %}
 
 {% block content %}
 
 
 <head>
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            background-color: #1a237e; /* Dark Blue */
+            color: #ffc107; /* Yellow */
+        }
+
         .center {
             position: absolute;
             left: 50%;
             top: 50%;
             transform: translate(-50%, -50%);
         }
+
+        form {
+            max-width: 300px;
+            margin: 20px auto;
+            background-color: #0d47a1; /* Darker Blue */
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ffc107; /* Yellow */
+            border-radius: 5px;
+            box-sizing: border-box;
+            background-color: #1a237e; /* Dark Blue */
+            color: #ffc107; /* Yellow */
+        }
+
+        input[type="submit"] {
+            background-color: #ffc107; /* Yellow */
+            color: #1a237e; /* Dark Blue */
+            cursor: pointer;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #ffd54f; /* Lighter Yellow */
+        }
+
+        p {
+            text-align: center;
+            margin-top: 15px;
+            color: #fff;
+        }
+
+        a {
+            color: #ffd54f; /* Lighter Yellow */
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+        .booking-details {
+            border: 2px solid #ffc107; /* Yellow */
+            border-radius: 10px;
+            background-color: #0d47a1; /* Darker Blue */
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .booking-details p {
+            margin: 10px 0; /* Add some space between paragraphs */
+            color: #ffc107; /* Yellow */
+        }
+        
+        .booking-details p strong {
+            color: #fff; /* White */
+            font-weight: bold;
+        }
+        
+        .booking-details p:first-child {
+            margin-top: 0; /* Remove top margin from the first paragraph */
+        }
+        
+        .booking-details p:last-child {
+            margin-bottom: 0; /* Remove bottom margin from the last paragraph */
+        }
+        
     </style>
 </head>
 <body>
@@ -19,11 +100,23 @@
     <script>window.location.href = "{% url 'login_view' %}"</script>
 {% endif %}
 <div class="center">
-
+    <h2>Ticket</h2>
+    <div class="booking-details">
+        <p><strong>PNR:</strong> {{ bus.PNR }}</p>
+        <p><strong>Route:</strong> {{ bus.bus_info }}</p>
+        <p><strong>Date of Journey (DOJ):</strong> {{ bus.doj }}</p>
+        <p><strong>Phone:</strong> {{ bus.phone }}</p>
+        <p><strong>Name:</strong> {{ bus.name }}</p>
+        <p><strong>Seats:</strong> {{ bus.seat_nos }}</p>
+        <p><strong>Bus Name:</strong> {{ bus.bus_name }}</p>
+        <p><strong>Total Fare:</strong> {{ bus.total_fare }}</p>
+        <p><strong>Arrival Time:</strong> {{ bus.arrival_time }}</p>
+        <p><strong>Transaction Password (TXN):</strong> {{ bus.txn_password }}</p>
+    </div>
     <form class="text-center border border-light p-5" action="{% url 'success' %}" method="POST">
         {% csrf_token %}
 
-
+        
         <!-- RAZORPAY INTEGRATION HERE -->
         <script 
         src="https://checkout.razorpay.com/v1/checkout.js" 

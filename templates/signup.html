@@ -68,9 +68,7 @@
     </style>
 </head>
 <body>
-    {% if not request.user.is_authenticated %}
-    <script>window.location.href = "{% url 'login_view' %}"</script>
-{% endif %}
+    
     <h2>Sign Up</h2>
     <form method="post" action="{% url 'signup' %}">
         {% csrf_token %}

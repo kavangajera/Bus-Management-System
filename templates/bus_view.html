@@ -1,14 +1,104 @@
 <!DOCTYPE html>
+{% load static %}
 {% include 'navbar.html' %}
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bus Seating Arrangement</title>
+    {% comment %} <link rel="stylesheet" type="text/css" href="{% static 'css/bus_view.css' %}"> {% endcomment %}
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            background-color: #1a237e; /* Dark Blue */
+            color: #ffc107; /* Yellow */
+        }
+
+        form {
+            max-width: 800px;
+            margin: 20px auto;
+            background-color: #0d47a1; /* Darker Blue */
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .input-wrapper{
+            width:60%;
+            float:left;
+            padding-left:15px;
+        }
+
+        input{
+            width:100%;
+            float:left;
+            padding:15px;
+            border-radius:10px;
+        }
+
+        label {
+            width:100%;
+            
+            margin-bottom: 10px;
+            color: #ffc107; /* Yellow */
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ffc107; /* Yellow */
+            border-radius: 5px;
+            box-sizing: border-box;
+            background-color: #1a237e; /* Dark Blue */
+            color: #ffc107; /* Yellow */
+        }
+
+        select:focus {
+            outline: none;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin-top: 20px;
+        }
+
+        li {
+            margin-bottom: 10px;
+            color: #fff;
+        }
+
+        
+        .button-wrapper{
+            width:50%;
+            float:left;
+            padding:15px;
+        }
+        button {
+            width:30%;
+            margin-left:250px;
+            background-color: #ffc107; /* Yellow */
+            color: #1a237e; /* Dark Blue */
+            padding:10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #ffd54f; /* Lighter Yellow */
+        }
+
         /* Add your CSS styles here */
         .bus-layout {
-            display: flex;
+            width:100%;
+            float:left;
+            padding:15px 20px;
+            padding-left:100px;
             flex-direction: column;
             align-items: center;
         }
@@ -31,10 +121,10 @@
             background-color: #c3e6cb; /* Green */
         }
         .seat.booked {
-            background-color: #f5c6cb; /* Red */
+            background-color: #462020; /* Red */
         }
         .seat.selected {
-            background-color: #ffc107; /* Yellow */
+            background-color: #fcfffd; /* Yellow */
         }
         .logo {
             margin-left: 403px;
@@ -43,6 +133,7 @@
             max-width: 30px; /* Set the max-width to match the width of one seat */
             height: auto; /* Maintain aspect ratio */
         }
+        
     </style>
 </head>
 <body>
@@ -66,12 +157,16 @@
     {% load static %}
     
     <!-- Add the logo before the seat arrangement -->
-    <img src="{% static 'images/steering_wheel.png' %}" alt="Steering Wheel Logo" class="logo">
+    {% comment %} <img src="{% static 'images/steering_wheel.png' %}" alt="Steering Wheel Logo" class="logo"> {% endcomment %}
 
     <form action="{% url 'choose_seat' %}" method="post">
         {% csrf_token %}
-        <input type="text" name="name" placeholder="Name"><br>
-        <input type="text" name="age" placeholder="age"><br><br>
+        <div class="input-wrapper">
+            <input type="text" name="name" placeholder="Name">
+        </div>
+        <div class="input-wrapper">
+        <input type="text" name="age" placeholder="age">
+        </div>
         <div class="bus-layout">
             
             {% for row in seat_arrangement %}
@@ -85,7 +180,7 @@
                     </div>
                     {%else%}
                    
-                    <div class="seat available" data-seat="{{ seat.number }}" onclick="selectSeat(this)">
+                    <div class="seat available" data-seat="{{ seat.number }}" onclick="selectSeat(this)" style="color:#101211">
                         {{ seat.number }}
                     </div>
                     {%endif%}
@@ -95,7 +190,6 @@
             {% endfor %}
         </div>
         <input type="hidden" name="selected_seats" id="selected_seats">
-        <p id="selected_seats_display"></p>
         <button type="submit">Submit</button>
     </form>
 

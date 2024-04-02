@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
+    <title>Cancel seats of a Ticket</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -30,8 +30,13 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
         }
 
-        input {
-            width: 100%;
+        input[type="checkbox"] {
+            margin-right: 5px;
+        }
+
+        input[type="text"],
+        input[type="submit"] {
+            width: calc(100% - 22px); /* Adjusted width to accommodate padding and border */
             padding: 10px;
             margin-bottom: 15px;
             border: 1px solid #ffc107; /* Yellow */
@@ -57,6 +62,10 @@
             color: #fff;
         }
 
+        label {
+            color: #fff;
+        }
+
         a {
             color: #ffd54f; /* Lighter Yellow */
             text-decoration: none;
@@ -68,14 +77,20 @@
     </style>
 </head>
 <body>
-    
-    <h2>Login</h2>
-    <form method="post" action="{% url 'login_view' %}">
+    {% if not request.user.is_authenticated %}
+        <script>window.location.href = "{% url 'login_view' %}"</script>
+    {% endif %}
+    <h2>Cancel seats of a Ticket</h2>
+    <p>PNR: {{ ticket.PNR }}</p>
+    <form action="{% url 'cancel_seats' %}" method="post">
         {% csrf_token %}
-        <input type="text" name="username" placeholder="Username" required>
-        <input type="password" name="password" placeholder="Password" required>
-        <input type="submit" value="Login">
+        {% for seat in seats %}
+            <input type="checkbox" id="{{ seat }}" name="selected_seats" value="{{ seat }}">
+            <label for="{{ seat }}">{{ seat }}</label><br>
+        {% endfor %}
+        <br>
+        <input type="text" name="txn" placeholder="Txn Password"><br>
+        <input type="submit" value="Submit">
     </form>
-    <p>Don't have an account? <a href="{% url 'signup' %}">Sign Up</a></p>
 </body>
 </html>

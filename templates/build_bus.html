@@ -6,13 +6,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Build Bus</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/build_bus.css' %}">
 </head>
 <body>
-    {% if not request.user.is_authenticated %}
-        <script>window.location.href = "{% url 'login_view' %}"</script>
-    {% endif %}
+    {% if user.is_authenticated %}
+        {% if request.session.user_username %}
+        <p>Logged in as: {{ request.session.user_username }}</p>
+    
     <form action="{% url 'build_bus' %}" method="post">
         {%csrf_token%}
+        <input type="text" placeholder="Bus Name format:(123RJT-JND456)" name="bus_name">
         <label for="route">Route:</label>
         <select name="route">
             {% for route in routes %}
@@ -33,5 +36,12 @@
         <button type="submit">Build</button>
         
     </form>
+    {% else %}
+        <p>Not logged in</p>
+        {% endif %}
+    {% endif %}
+    {% if not request.user.is_authenticated %}
+        <script>window.location.href = "{% url 'login_view' %}"</script>
+    {% endif %}
 </body>
 </html>

@@ -129,3 +129,5 @@ AUTH_USER_MODEL = 'bus_managing.CustomUser'
 
 RAZORPAY_API_KEY = 'rzp_test_2PoNkDRlls7sqc'
 RAZORPAY_API_SECRET_KEY = 'sZbVkneymPHcNgdVm8YViAnY'
+
+# twilio code = GTQTJDWLGRAVAW2CSFUXD8BC
