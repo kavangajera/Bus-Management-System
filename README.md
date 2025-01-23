@@ -45,10 +45,9 @@ This **Django**-based project is a fully functional bus management platform. It 
 ## 📸 **Screenshots**  
 
 ### 🏠 **Homepage**  
-![Homepage Screenshot](https://via.placeholder.com/800x400?text=Homepage+Screenshot)
+<img width="782" alt="Screenshot 2025-01-23 at 11 04 03 PM" src="https://github.com/user-attachments/assets/7791a83f-4e5f-462c-bc73-aa2640fc8e92" />
 
-### 🗺️ **Route Visualization**  
-![Route Visualization Screenshot](https://via.placeholder.com/800x400?text=Route+Visualization)
+
 
 ---
 
