@@ -4,3 +4,4 @@ twilio
 razorpay
 geopy
 gunicorn
+whitenoise
