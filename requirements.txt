@@ -1,0 +1,5 @@
+django
+setuptools
+twilio
+razorpay
+geopy

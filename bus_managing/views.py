@@ -1,6 +1,7 @@
 from django.contrib.auth import login,authenticate,logout
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
 import string,random
 from BMS.settings import RAZORPAY_API_KEY, RAZORPAY_API_SECRET_KEY
 from .models import CustomUser,City_Detail,Route_Detail,CitiesOrder,Distance,Bus_Detail,Bus_Type,Bus_Seats,Advance_booking
@@ -13,6 +14,7 @@ import razorpay
 from django.views.decorators.csrf import csrf_exempt
 import ast
 from twilio.rest import Client
+
 def home(request):
     return render(request,'home.html')
 
@@ -63,17 +65,21 @@ def login_view(request):
     
     return render(request,'login.html')
 
+@login_required
 def logout_view(request):
     logout(request)
     messages.success(request,"logged OUT")
     return redirect('homepage')
 
+@login_required
 def passenger(request):
     return render(request,'passenger.html')
 
+@login_required
 def govt_agent(request):
     return render(request,'govt_agent.html')
 
+@login_required
 def select_route(request):
     if request.method == 'POST':
         source = request.POST.get('source')
@@ -86,6 +92,7 @@ def select_route(request):
     
     return render(request,'select_route.html',{'cities': City_Detail.objects.all()})
 
+@login_required
 def choose_bus(request):
     
     bus_data = []
@@ -152,7 +159,7 @@ def choose_bus(request):
          
     return render(request,'choose_bus.html',{'bus_data': bus_data})
 
-
+@login_required
 def choose_seat(request):
     
     bus_data = []
@@ -238,16 +245,27 @@ def choose_seat(request):
         return redirect('payment')
     return render(request,'bus_view.html',{'bus_data':bus_data,'seat_arrangement':seat_arrangement,'unavailable_seats':list(unavailable_seats)})
     
+@login_required
 def city(request):
+    # Add role check for admin/government_agent only
+    if request.user.role not in ['admin', 'government_agent']:
+        messages.error(request, f"Access denied. Your role '{request.user.role}' doesn't have permission to add cities.")
+        return redirect('passenger')
+        
     if request.method =='POST':   
        city = request.POST.get('city')
        ct = City_Detail(city=city)
        ct.save()
+       messages.success(request, f"City '{city}' added successfully!")
     return render(request,'city.html') 
 
-
-    
+@login_required   
 def route(request):
+    # Add role check for admin/government_agent only
+    if request.user.role not in ['admin', 'government_agent']:
+        messages.error(request, f"Access denied. Your role '{request.user.role}' doesn't have permission to add routes.")
+        return redirect('passenger')
+        
     if request.method == 'POST':
         source_name = request.POST.get('source')
         destination_name = request.POST.get('destination')
@@ -283,7 +301,8 @@ def route(request):
             to_city = cities[i+1]
             if not (Distance.objects.filter(from_city=from_city, to_city=to_city).exists() or Distance.objects.filter(from_city=to_city, to_city=from_city).exists()):
                 getDistance(from_city,to_city)
-            
+        
+        messages.success(request, "Route added successfully!")
         
     return render(request, 'route.html', {'cities': City_Detail.objects.all()})
 
@@ -305,7 +324,13 @@ def getDistance(source,destination):
         dis=distance.distance(place1,place2).km     
         Distance.objects.create(from_city = source,to_city = destination,distance = dis)
 
+@login_required
 def build_bus(request):
+    # Add role check for admin/government_agent only
+    if request.user.role not in ['admin', 'government_agent']:
+        messages.error(request, f"Access denied. Your role '{request.user.role}' doesn't have permission to add buses.")
+        return redirect('passenger')
+        
     if request.method=='POST':
         route = request.POST.get('route')
         name = request.POST.get('bus_name')
@@ -322,69 +347,153 @@ def build_bus(request):
         
         bus = Bus_Detail(bus_name=name,date=date,route=r,bus_type=b_type,seats=seats)
         bus.save()
+        messages.success(request, f"Bus '{name}' added successfully!")
     return render(request,'build_bus.html',{'routes':Route_Detail.objects.all(),'bus_types':Bus_Type.objects.all()})
     
-
+@login_required
 def payment(request):
     pnr=request.session.get('pnr')
-    bus = Advance_booking.objects.get(PNR=pnr)
+    
+    # Security check: Ensure the booking belongs to the current user
+    try:
+        bus = Advance_booking.objects.get(PNR=pnr, username=request.user.username)
+    except Advance_booking.DoesNotExist:
+        messages.error(request, "Invalid booking or access denied.")
+        return redirect('passenger')
+    
     amount = request.session.get('total_fare')*100
     order_currency = 'INR'
-    client = razorpay.Client(auth=('rzp_test_2PoNkDRlls7sqc','sZbVkneymPHcNgdVm8YViAnY'))
+    client = razorpay.Client(auth=(RAZORPAY_API_KEY, RAZORPAY_API_SECRET_KEY))
     payment = client.order.create({'amount':amount,'currency':'INR','payment_capture':'1'})
     context = {'payment':payment,'amount':amount,'bus':bus}
     return render(request,'payment.html',context)
 
 @csrf_exempt
+@login_required
 def success(request):
-    pnr='G1-08954618'
-    bus = Advance_booking.objects.get(PNR=pnr)
-    msg = "Route: "+bus.bus_info+'\n'+"Bus_Name"+bus.bus_name+'\n'+"Fare: "+str(bus.total_fare)+"DOJ: "+bus.doj+'\n'+"Seats: "+bus.seat_nos+'\n'+"Txnpass: "+bus.txn_password
-    account_sid = 'AC533cf4edf8c7b91b7f41992f452f9c8a'
-    auth_token = '235409a828c61edb487a494f6c38300a'
+    # Get PNR from session instead of hardcoded value
+    pnr = request.session.get('pnr')
+    if not pnr:
+        messages.error(request, "No booking found.")
+        return redirect('passenger')
     
-    twilio_number = '+12512548928'
-    my_number = '+919104854139'
-    client = Client(account_sid,auth_token)
-    message = client.messages.create(
-        body=msg,
-        from_=twilio_number,
-        to=my_number
-    )
-    print(message)
-    return render(request, 'success.html')
+    # Security check: Ensure the booking belongs to the current user
+    try:
+        bus = Advance_booking.objects.get(PNR=pnr, username=request.user.username)
+    except Advance_booking.DoesNotExist:
+        messages.error(request, "Invalid booking or access denied.")
+        return redirect('passenger')
+    
+    # Use the user's phone number from the booking
+    msg = "Route: "+bus.bus_info+'\n'+"Bus_Name: "+bus.bus_name+'\n'+"Fare: "+str(bus.total_fare)+'\n'+"DOJ: "+bus.doj+'\n'+"Seats: "+str(bus.seat_nos)+'\n'+"Txnpass: "+bus.txn_password
+    
+    try:
+        account_sid = 'AC533cf4edf8c7b91b7f41992f452f9c8a'
+        auth_token = '235409a828c61edb487a494f6c38300a'
+        
+        twilio_number = '+12512548928'
+        # Use the user's phone number from the booking
+        user_number = bus.phone
+        client = Client(account_sid,auth_token)
+        message = client.messages.create(
+            body=msg,
+            from_=twilio_number,
+            to=user_number
+        )
+        print(message)
+    except Exception as e:
+        print(f"SMS sending failed: {e}")
+        # Don't fail the success page if SMS fails
+    
+    # Clear session data after successful payment
+    request.session.pop('pnr', None)
+    request.session.pop('total_fare', None)
+    request.session.pop('bus', None)
+    request.session.pop('fare', None)
+    request.session.pop('cities', None)
+    request.session.pop('times', None)
+    request.session.pop('date', None)
+    request.session.pop('source', None)
+    request.session.pop('destination', None)
+    
+    return render(request, 'success.html', {'bus': bus})
 
+@login_required
 def cancel(request):
-    tickets=[]
+    # Only show tickets belonging to the current user
+    tickets = Advance_booking.objects.filter(username=request.user.username)
     
-    tickets=Advance_booking.objects.filter(username='kalu')
     if request.method == 'POST':
         PNR = request.POST.get('selected_ticket')
-        request.session['PNR'] = PNR    
-        return redirect('cancel_seats')
-    print(tickets)
+        
+        # Security check: Ensure the ticket belongs to the current user
+        try:
+            ticket = Advance_booking.objects.get(PNR=PNR, username=request.user.username)
+            request.session['PNR'] = PNR    
+            return redirect('cancel_seats')
+        except Advance_booking.DoesNotExist:
+            messages.error(request, "Invalid ticket or access denied.")
+            return redirect('cancel')
+    
     return render(request,'cancel_ticket.html',{'tickets':tickets})
  
+@login_required
 def cancel_seats(request):
     PNR = request.session.get('PNR')
-    ticket = Advance_booking.objects.get(PNR=PNR)
+    if not PNR:
+        messages.error(request, "No ticket selected for cancellation.")
+        return redirect('cancel')
+    
+    # Security check: Ensure the ticket belongs to the current user
+    try:
+        ticket = Advance_booking.objects.get(PNR=PNR, username=request.user.username)
+    except Advance_booking.DoesNotExist:
+        messages.error(request, "Invalid ticket or access denied.")
+        return redirect('cancel')
+    
     bus_obj = Bus_Detail.objects.get(bus_name=ticket.bus_name)
     seats = ticket.seat_nos
-    ticket_list = ast.literal_eval(seats)
+    ticket_list = ast.literal_eval(seats) if isinstance(seats, str) else seats
+    
     if request.method == 'POST':
         selected_seats = request.POST.getlist('selected_seats')
         txn_pass = request.POST.get('txn')
+        
+        if not selected_seats:
+            messages.error(request, "Please select at least one seat to cancel.")
+            return render(request,'cancel_seats.html',{'seats':ticket_list,'ticket':ticket})
+        
         if txn_pass == ticket.txn_password:
+            # Calculate refund amount
+            fare_per_seat = ticket.total_fare / ticket.seats
+            refund_amount = len(selected_seats) * fare_per_seat
+            
+            # Update seat availability
             for seat in selected_seats:
                 bus_seat = Bus_Seats.objects.get(bus_name=bus_obj,date=ticket.doj,seat_no=seat)
                 bus_seat.available = True
-                ticket_list.remove(seat)
-                ticket.seat_nos = ticket_list
-                if len(ticket_list) == 0:
-                    ticket.delete()
-                    
                 bus_seat.save()
+                
+                # Remove seat from ticket
+                if seat in ticket_list:
+                    ticket_list.remove(seat)
+            
+            # Update ticket or delete if no seats left
+            if len(ticket_list) == 0:
+                ticket.delete()
+                messages.success(request, f"All seats cancelled successfully! Refund amount: ₹{refund_amount:.2f}")
+                # Clear session
+                request.session.pop('PNR', None)
+                return redirect('cancel')
+            else:
+                # Update ticket with remaining seats
+                ticket.seat_nos = ticket_list
+                ticket.seats = len(ticket_list)
+                ticket.total_fare = ticket.total_fare - refund_amount
+                ticket.save()
+                messages.success(request, f"Selected seats cancelled successfully! Refund amount: ₹{refund_amount:.2f}")
+                
         else:
-            print("Enter correct txn password")
+            messages.error(request, "Incorrect transaction password. Please try again.")
             
     return render(request,'cancel_seats.html',{'seats':ticket_list,'ticket':ticket})

@@ -74,10 +74,17 @@ class Bus_Detail(models.Model):
     date = models.CharField(max_length=122)
     route = models.ForeignKey(Route_Detail,blank=True, null=True,on_delete=models.CASCADE)
     bus_type = models.ForeignKey(Bus_Type,max_length=122, blank=True, null=True,on_delete=models.CASCADE)
-    seats = models.IntegerField(max_length=50)
-    available_seats = models.IntegerField(max_length=50,default=seats)
+    seats = models.IntegerField()
+    available_seats = models.IntegerField(default=0)  # Changed: removed max_length and field reference
+    
     def __str__(self):
         return f"{self.bus_name}"
+    
+    def save(self, *args, **kwargs):
+        # Set available_seats to seats value when creating new instance
+        if not self.pk:  # Only for new instances
+            self.available_seats = self.seats
+        super().save(*args, **kwargs)
     
     
 class Bus_Seats(models.Model):
